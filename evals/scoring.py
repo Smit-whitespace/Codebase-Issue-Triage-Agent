@@ -62,6 +62,8 @@ class CaseResult(BaseModel):
     predicted_priority: str | None = None
     predicted_investigation: bool | None = None
     confidence: float | None = None
+    # Kept so a wrong answer can be traced back to the model's reasoning.
+    rationale: str | None = None
     category_correct: bool = False
     priority_acceptable: bool = False
     investigation_correct: bool | None = None
@@ -131,10 +133,25 @@ def score_case(
         predicted_priority=result.priority,
         predicted_investigation=result.needs_repository_investigation,
         confidence=result.confidence,
+        rationale=result.rationale,
         category_correct=result.category == case.expected_category,
         priority_acceptable=result.priority in case.acceptable_priorities,
         investigation_correct=investigation_correct,
     )
+
+
+def status_label(result: CaseResult) -> str:
+    """Short per-case status: 'ok', 'INVALID', or 'WRONG(<fields>)'."""
+    if not result.valid_output:
+        return "INVALID"
+    wrong = []
+    if not result.category_correct:
+        wrong.append("cat")
+    if not result.priority_acceptable:
+        wrong.append("pri")
+    if result.investigation_correct is False:
+        wrong.append("inv")
+    return f"WRONG({','.join(wrong)})" if wrong else "ok"
 
 
 def _rate(numerator: int, denominator: int) -> float | None:
@@ -284,7 +301,10 @@ def format_report(summary: dict, results: list[CaseResult]) -> str:
     failures = [
         r
         for r in results
-        if not r.valid_output or not r.category_correct or not r.priority_acceptable
+        if not r.valid_output
+        or not r.category_correct
+        or not r.priority_acceptable
+        or r.investigation_correct is False
     ]
     lines += ["", f"--- Failures ({len(failures)}) ---"]
     for r in failures:
@@ -297,6 +317,11 @@ def format_report(summary: dict, results: list[CaseResult]) -> str:
         if not r.priority_acceptable:
             problems.append(
                 f"priority {r.predicted_priority} not in {r.acceptable_priorities}"
+            )
+        if r.investigation_correct is False:
+            problems.append(
+                f"investigation {r.predicted_investigation}"
+                f" != {r.expected_investigation}"
             )
         lines.append(f"  {r.id}: " + "; ".join(problems) + f"  (conf {r.confidence})")
 

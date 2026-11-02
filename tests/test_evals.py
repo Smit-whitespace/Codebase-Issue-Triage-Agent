@@ -11,6 +11,7 @@ from evals.scoring import (
     format_report,
     load_dataset,
     score_case,
+    status_label,
     summarize,
 )
 
@@ -157,3 +158,35 @@ def test_parse_triage_response_accepts_valid_json() -> None:
     raw = make_result().model_dump_json()
 
     assert parse_triage_response(raw).category == "bug"
+
+
+def test_report_lists_investigation_mismatches() -> None:
+    results = [
+        score_case(
+            make_case(id="over", expected_investigation=False),
+            make_result(needs_repository_investigation=True),
+        )
+    ]
+
+    report = format_report(summarize(results), results)
+
+    assert "over: investigation True != False" in report
+
+
+def test_status_label_names_every_wrong_field() -> None:
+    case = make_case(expected_investigation=False)
+
+    assert status_label(score_case(make_case(), make_result())) == "ok"
+    assert status_label(score_case(make_case(), None, error="x")) == "INVALID"
+    assert (
+        status_label(
+            score_case(case, make_result(category="other", priority="low"))
+        )
+        == "WRONG(cat,pri,inv)"
+    )
+
+
+def test_score_case_keeps_rationale() -> None:
+    scored = score_case(make_case(), make_result(rationale="Blocks startup."))
+
+    assert scored.rationale == "Blocks startup."

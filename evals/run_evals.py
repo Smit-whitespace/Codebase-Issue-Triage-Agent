@@ -19,7 +19,14 @@ from pathlib import Path
 from app.llm import LLMConfig, LLMConfigError, get_llm, load_config
 from app.models import IssueReport
 from app.triage import TriageOutputError, triage_issue
-from evals.scoring import CaseResult, format_report, load_dataset, score_case, summarize
+from evals.scoring import (
+    CaseResult,
+    format_report,
+    load_dataset,
+    score_case,
+    status_label,
+    summarize,
+)
 
 DEFAULT_DATASET = Path(__file__).parent / "dataset.jsonl"
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "results"
@@ -114,13 +121,8 @@ def main() -> None:
             time.sleep(args.delay)
         outcome = run_case(case)
         results.append(outcome)
-        status = (
-            "INVALID"
-            if not outcome.valid_output
-            else ("ok" if outcome.category_correct else "WRONG")
-        )
         print(
-            f"[{index}/{len(cases)}] {case.id:<12} {status:<8}"
+            f"[{index}/{len(cases)}] {case.id:<12} {status_label(outcome):<16}"
             f"{outcome.latency_seconds:6.1f}s",
             flush=True,
         )
