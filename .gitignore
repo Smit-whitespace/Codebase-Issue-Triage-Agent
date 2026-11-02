@@ -34,3 +34,6 @@ Thumbs.db
 *.sqlite3
 *.db
 *.log
+
+# Eval run outputs
+evals/results/

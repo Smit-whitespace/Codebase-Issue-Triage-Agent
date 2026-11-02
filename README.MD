@@ -85,7 +85,32 @@ Run Ruff:
 .venv\Scripts\ruff check .
 ```
 
-The current test suite covers repository-search behavior and conditional graph routing. The last recorded run passed all 6 tests, and Ruff reported no issues.
+The test suite covers repository-search behavior, conditional graph routing, and the eval scoring logic.
+
+## Evaluation
+
+Unit tests check the code; evals check the model's *answers*. The eval harness runs the agent against hand-labelled issues and measures how often it is right.
+
+- `evals/dataset.jsonl`: labelled cases across every category, including edge cases tagged `edge:*` (prompt injection, bugs disguised as questions, feature requests phrased as bugs, vague reports). Priority is subjective, so each case lists the `acceptable_priorities`.
+- `evals/scoring.py`: pure scoring logic, unit-tested in `tests/test_evals.py`.
+- `evals/run_evals.py`: runs the agent and writes results.
+
+With Ollama running:
+
+```powershell
+.venv\Scripts\python -m evals.run_evals --label baseline
+.venv\Scripts\python -m evals.run_evals --tag edge:prompt-injection
+.venv\Scripts\python -m evals.run_evals --ids bug-004 q-006
+```
+
+The report shows:
+
+- Valid-output rate, category accuracy, priority-acceptable rate, and investigation-decision accuracy. An invalid output counts as wrong.
+- Accuracy for each category, a confusion matrix, and accuracy by tag.
+- A **calibration table** that checks whether higher model-reported confidence actually comes with higher accuracy.
+- Every failure. Full per-case results, including the raw model response for invalid output, are saved to `evals/results/run-<timestamp>-<label>.json` (gitignored).
+
+Workflow: run a baseline, change one thing (the prompt, the model, or the retrieval), rerun, and compare. Add every real-world misclassification to the dataset so it can't regress silently.
 
 ## Current Limitations
 

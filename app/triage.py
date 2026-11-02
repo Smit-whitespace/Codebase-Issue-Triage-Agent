@@ -44,6 +44,30 @@ Issue description:
 """
 
 
+class TriageOutputError(ValueError):
+    """Raised when the model response is not valid triage JSON.
+
+    Keeps the raw model output so failures can be inspected and logged.
+    """
+
+    def __init__(self, message: str, raw_response: str) -> None:
+        super().__init__(message)
+        self.raw_response = raw_response
+
+
+def parse_triage_response(content: str) -> TriageResult:
+    """Parse and validate a raw model response into a TriageResult."""
+    try:
+        data = json.loads(content)
+        return TriageResult.model_validate(data)
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise TriageOutputError(
+            "The model returned invalid triage JSON. "
+            "Inspect the raw model response to diagnose the mismatch.",
+            raw_response=content,
+        ) from exc
+
+
 def triage_issue(report: IssueReport) -> TriageResult:
     """Generate and validate a structured issue-triage recommendation."""
     prompt = TRIAGE_PROMPT.format(
@@ -58,11 +82,4 @@ def triage_issue(report: IssueReport) -> TriageResult:
     if not isinstance(content, str):
         raise TypeError("The model returned a non-text response.")
 
-    try:
-        data = json.loads(content)
-        return TriageResult.model_validate(data)
-    except (json.JSONDecodeError, ValidationError) as exc:
-        raise ValueError(
-            "The model returned invalid triage JSON. "
-            "Inspect the raw model response to diagnose the mismatch."
-        ) from exc
+    return parse_triage_response(content)
