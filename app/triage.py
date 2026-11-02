@@ -18,8 +18,15 @@ Rules:
   or a complete outage affecting core functionality.
 - summary briefly describes the issue.
 - rationale explains the classification and priority.
-- needs_repository_investigation is true when inspecting source code or
-  configuration would materially help.
+- needs_repository_investigation is true only when triaging the issue depends
+  on how the existing code currently behaves and the report does not already
+  provide that information. Examples: a malfunction with an unknown cause, a
+  question about what a setting actually does, or a reported mismatch between
+  documentation and actual behavior (the code shows which one is intended:
+  stale docs are a documentation issue, an unintended change is a bug).
+  It is false when the report is self-contained or the answer lives in
+  documentation or a product decision. Examples: feature requests, how-to
+  questions, and typos whose location and exact text are already stated.
 - confidence is a number from 0.0 to 1.0.
 - proposed_labels is a list of at most 10 short labels.
 - draft_response is a suggested reply for a human to review.
