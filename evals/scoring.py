@@ -230,6 +230,12 @@ def _pct(value: float | None) -> str:
     return "  n/a" if value is None else f"{value * 100:5.1f}%"
 
 
+def _format_latency(latency: dict) -> str:
+    if latency["median"] is None:
+        return "Latency median / max:   n/a"
+    return f"Latency median / max:   {latency['median']}s / {latency['max']}s"
+
+
 def format_report(summary: dict, results: list[CaseResult]) -> str:
     """Render a human-readable text report."""
     lines = [
@@ -239,10 +245,7 @@ def format_report(summary: dict, results: list[CaseResult]) -> str:
         f"Category accuracy:      {_pct(summary['category_accuracy'])}",
         f"Priority acceptable:    {_pct(summary['priority_acceptable_rate'])}",
         f"Investigation accuracy: {_pct(summary['investigation_accuracy'])}",
-        (
-            f"Latency median / max:   {summary['latency_seconds']['median']}s"
-            f" / {summary['latency_seconds']['max']}s"
-        ),
+        _format_latency(summary["latency_seconds"]),
         "",
         "--- Category accuracy by expected category ---",
     ]
