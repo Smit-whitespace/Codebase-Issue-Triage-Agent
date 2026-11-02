@@ -1,17 +1,10 @@
 
 import json
 
-from langchain_ollama import ChatOllama
 from pydantic import ValidationError
 
+from app.llm import get_llm
 from app.models import IssueReport, TriageResult
-
-llm = ChatOllama(
-    model="qwen3:8b",
-    temperature=0,
-    base_url="http://127.0.0.1:11434",
-    format="json",
-)
 
 TRIAGE_PROMPT = """Classify this software issue for a human maintainer.
 
@@ -76,10 +69,25 @@ def triage_issue(report: IssueReport) -> TriageResult:
         description=report.description,
     )
 
-    response = llm.invoke(prompt)
-    content = response.content
+    response = get_llm().invoke(prompt)
+    return parse_triage_response(message_text(response.content))
 
-    if not isinstance(content, str):
-        raise TypeError("The model returned a non-text response.")
 
-    return parse_triage_response(content)
+def message_text(content: object) -> str:
+    """Extract text from a chat message's content.
+
+    Ollama returns a plain string; some providers (including Gemini) may
+    return a list of content parts instead.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict) and part.get("type") == "text":
+                parts.append(str(part.get("text", "")))
+        if parts:
+            return "".join(parts)
+    raise TypeError("The model returned a non-text response.")

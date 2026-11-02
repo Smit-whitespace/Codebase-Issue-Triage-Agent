@@ -1,6 +1,6 @@
 """Run the triage agent against the labelled eval dataset.
 
-Usage (from the project root, with Ollama running):
+Usage (from the project root; configure the model as described in the README):
 
     python -m evals.run_evals
     python -m evals.run_evals --limit 5
@@ -16,12 +16,23 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+from app.llm import LLMConfig, LLMConfigError, get_llm, load_config
 from app.models import IssueReport
-from app.triage import TriageOutputError, llm, triage_issue
+from app.triage import TriageOutputError, triage_issue
 from evals.scoring import CaseResult, format_report, load_dataset, score_case, summarize
 
 DEFAULT_DATASET = Path(__file__).parent / "dataset.jsonl"
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "results"
+
+
+def preflight(config: LLMConfig) -> None:
+    """Fail fast with a clear message if the configured model can't be used."""
+    if config.provider == "ollama":
+        check_ollama(config.ollama_base_url)
+    try:
+        get_llm()
+    except LLMConfigError as exc:
+        sys.exit(str(exc))
 
 
 def check_ollama(base_url: str) -> None:
@@ -71,6 +82,12 @@ def main() -> None:
         default="",
         help="Short note for this run, e.g. 'baseline' or 'prompt-v2'.",
     )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=0.0,
+        help="Seconds to wait between cases, to stay under API rate limits.",
+    )
     args = parser.parse_args()
 
     cases = load_dataset(args.dataset)
@@ -84,10 +101,17 @@ def main() -> None:
     if not cases:
         sys.exit("No eval cases matched the filters.")
 
-    check_ollama(llm.base_url)
+    try:
+        config = load_config()
+    except LLMConfigError as exc:
+        sys.exit(str(exc))
+    preflight(config)
+    print(f"Evaluating {config.provider}:{config.model} on {len(cases)} cases\n")
 
     results: list[CaseResult] = []
     for index, case in enumerate(cases, start=1):
+        if index > 1 and args.delay:
+            time.sleep(args.delay)
         outcome = run_case(case)
         results.append(outcome)
         status = (
@@ -115,7 +139,8 @@ def main() -> None:
             {
                 "label": args.label,
                 "timestamp": timestamp,
-                "model": llm.model,
+                "provider": config.provider,
+                "model": config.model,
                 "dataset": str(args.dataset),
                 "summary": summary,
                 "cases": [r.model_dump() for r in results],
