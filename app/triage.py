@@ -13,7 +13,23 @@ Do not add fields or use alternative field names.
 
 Rules:
 - category must be one of: bug, feature_request, question, documentation, other.
+  Classify by the underlying problem, not the phrasing.
+  - bug: the product behaves incorrectly. This includes cosmetic defects in the
+    product's own UI text, labels, and error messages, such as typos. A report
+    of unintended or harmful behavior is a bug even when phrased as a question.
+  - documentation: missing, wrong, or unclear content in the docs, README,
+    guides, or API reference. Text shown inside the product is not documentation.
+  - question: the reporter needs information and nothing appears broken.
+  - feature_request: a new or changed product capability.
+  - other: anything not about the product itself, such as release process,
+    community, governance, thanks, and spam.
+  These definitions decide the category only. Judge priority and
+  needs_repository_investigation by their own rules below.
 - priority must be one of: low, medium, high, critical.
+- Use low when users can carry on as before, such as cosmetic defects,
+  documentation fixes or additions, convenience features, and project proposals.
+- Use medium when the issue noticeably disrupts users' work or blocks a workflow,
+  such as a feature producing incorrect results.
 - Use critical only for severe failures such as data loss, security exposure,
   or a complete outage affecting core functionality.
 - summary briefly describes the issue.
