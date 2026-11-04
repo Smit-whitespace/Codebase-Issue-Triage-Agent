@@ -28,7 +28,8 @@ from app.models import IssueReport, TriageResult
 from app.triage import TRIAGE_PROMPT, triage_issue
 from evals.run_evals import preflight
 
-DEFAULT_REPOS = ("pypa/pip", "Textualize/rich", "astral-sh/uv")
+# These repos mark when a maintainer has reviewed an issue, so they can be scored.
+DEFAULT_REPOS = ("pypa/pip", "python-poetry/poetry")
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "results" / "shadow"
 PAGE_SIZE = 100
 

@@ -162,6 +162,14 @@ Shadow mode triages new issues from public repositories and saves each predictio
 
 Each record stores the prediction, the prompt version, and a snapshot of the issue, in `evals/results/shadow/` (gitignored). The model only sees the title and body. Issues already predicted are skipped, so it is safe to rerun. Set `GITHUB_TOKEN` to raise the GitHub API rate limit.
 
+To compare predictions with what maintainers decided:
+
+```powershell
+python -m evals.shadow_compare
+```
+
+Issue templates apply type labels when an issue is opened, so a type label alone is only the reporter's claim. An issue is scored only after a maintainer has removed the "needs triage" label, which `pypa/pip` and `python-poetry/poetry` both use. Only category can be compared, not priority or investigation.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
