@@ -190,3 +190,13 @@ def test_score_case_keeps_rationale() -> None:
     scored = score_case(make_case(), make_result(rationale="Blocks startup."))
 
     assert scored.rationale == "Blocks startup."
+
+
+def test_eval_case_accepts_real_issue_with_empty_description() -> None:
+    assert make_case(description="").description == ""
+
+
+def test_eval_case_accepts_real_issue_with_very_long_description() -> None:
+    text = "x" * 20_000
+
+    assert make_case(description=text).description == text
