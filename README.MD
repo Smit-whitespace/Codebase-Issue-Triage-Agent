@@ -48,7 +48,7 @@ Create and activate a virtual environment, then install the project dependencies
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install langgraph langchain-ollama langchain-google-genai pydantic pytest ruff
+python -m pip install -r requirements.txt
 ```
 
 ## Model Configuration
@@ -150,3 +150,18 @@ Workflow: run a baseline, change one thing (the prompt, the model, or the retrie
 ## Safety
 
 Repository investigation is designed to be read-only. Treat model output as a recommendation and review it before taking action.
+
+## Shadow Mode
+
+Shadow mode triages new issues from public repositories and saves each prediction locally. It posts nothing and needs no permission from the repository owners.
+
+```powershell
+.venv\Scripts\python -m evals.shadow
+.venv\Scripts\python -m evals.shadow --repo pypa/pip --days 3 --limit 10
+```
+
+Each record stores the prediction, the prompt version, and a snapshot of the issue, in `evals/results/shadow/` (gitignored). The model only sees the title and body. Issues already predicted are skipped, so it is safe to rerun. Set `GITHUB_TOKEN` to raise the GitHub API rate limit.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

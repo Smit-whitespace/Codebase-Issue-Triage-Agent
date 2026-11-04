@@ -39,8 +39,8 @@ class EvalCase(BaseModel):
     """One hand-labelled issue with its expected triage outcome."""
 
     id: str = Field(min_length=1)
-    title: str = Field(min_length=3, max_length=200)
-    description: str = Field(min_length=10, max_length=10_000)
+    title: str = Field(min_length=1)
+    description: str
     expected_category: Category
     # Priority is subjective, so a case may accept more than one value.
     acceptable_priorities: list[Priority] = Field(min_length=1)

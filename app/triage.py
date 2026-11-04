@@ -89,7 +89,7 @@ def triage_issue(report: IssueReport) -> TriageResult:
     prompt = TRIAGE_PROMPT.format(
         schema=json.dumps(TriageResult.model_json_schema()),
         title=report.title,
-        description=report.description,
+        description=report.description or "(no description provided)",
     )
 
     response = get_llm().invoke(prompt)
