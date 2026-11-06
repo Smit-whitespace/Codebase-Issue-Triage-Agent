@@ -90,6 +90,10 @@ def load_seen(path: Path) -> set[int]:
     return {json.loads(line)["number"] for line in lines if line.strip()}
 
 
+def prompt_version(prompt: str) -> str:
+    return hashlib.sha256(prompt.encode()).hexdigest()[:12]
+
+
 def predict(
     repo: str,
     issue: dict,
@@ -119,7 +123,7 @@ def predict(
         "state_at_prediction": issue["state"],
         "comments_at_prediction": issue["comments"],
         "labels_at_prediction": [label["name"] for label in issue["labels"]],
-        "prompt_version": hashlib.sha256(TRIAGE_PROMPT.encode()).hexdigest()[:12],
+        "prompt_version": prompt_version(TRIAGE_PROMPT),
         **metadata,
         **prediction,
         "error": error,

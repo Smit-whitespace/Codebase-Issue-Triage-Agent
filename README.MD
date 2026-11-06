@@ -170,6 +170,15 @@ python -m evals.shadow_compare
 
 Issue templates apply type labels when an issue is opened, so a type label alone is only the reporter's claim. An issue is scored only after a maintainer has removed the "needs triage" label, which `pypa/pip` and `python-poetry/poetry` both use. Only category can be compared, not priority or investigation.
 
+To compare an earlier prompt with the current one on those reviewed issues:
+
+```powershell
+$env:TRIAGE_LLM_PROVIDER = 'gemini'
+.venv\Scripts\python -m evals.prompt_compare --baseline aba4c3d --runs 2
+```
+
+The first run saves the issue set, so later label changes can't alter it. Issues opened after 2026-11-04 are held out and never included. Each prompt runs more than once because answers vary between identical runs, and the report shows how much. If a run stops at a quota limit, rerun the same command to continue. To compare a different prompt, use a new `--output-dir`, because the saved issue set is reused otherwise.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
