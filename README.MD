@@ -172,6 +172,15 @@ Issue templates apply type labels when an issue is opened, so a type label alone
 
 Results are reported in two parts. Issues opened before 2026-11-05 are the tuning set: they were looked at while the prompt was being changed. Issues opened from 2026-11-05 on are the held-out set, which gives the honest accuracy figure. Don't change the prompt because of held-out misses.
 
+New issues arrive too slowly to fill the held-out set, so there is also a held-out set built from older issues that maintainers have already reviewed:
+
+```powershell
+python -m evals.backfill               # predict, then score
+python -m evals.backfill --score-only  # score saved predictions
+```
+
+By default it uses issues opened from 2026-04-01 to 2026-07-02. The window starts after the default Gemini model's training cutoff (March 2026) and ends before the earliest shadow issue. Change `--start` if you switch to a model with a later cutoff.
+
 To compare an earlier prompt with the current one on those reviewed issues:
 
 ```powershell
