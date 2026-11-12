@@ -4,6 +4,7 @@ from evals.shadow_compare import (
     RULES,
     expected_category,
     score_records,
+    split_held_out,
     wilson_interval,
 )
 
@@ -123,6 +124,19 @@ def test_wilson_interval_matches_a_known_value() -> None:
 
     assert low == pytest.approx(0.882, abs=0.001)
     assert high == pytest.approx(0.996, abs=0.001)
+
+
+def test_issues_from_the_held_out_date_onward_are_split_off() -> None:
+    records = [
+        make_record(1, created_at="2026-11-04T23:59:59Z"),
+        make_record(2, created_at="2026-11-05T00:00:00Z"),
+        make_record(3, created_at="2026-11-10T08:00:00Z"),
+    ]
+
+    tuning, held_out = split_held_out(records)
+
+    assert [r["number"] for r in tuning] == [1]
+    assert [r["number"] for r in held_out] == [2, 3]
 
 
 def test_wilson_interval_with_no_data_is_the_full_range() -> None:

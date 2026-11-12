@@ -20,7 +20,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from evals.shadow import DEFAULT_OUTPUT_DIR, fetch_new_issues, output_path
+from evals.shadow import (
+    DEFAULT_OUTPUT_DIR,
+    HELD_OUT_FROM,
+    fetch_new_issues,
+    output_path,
+)
 
 
 @dataclass(frozen=True)
@@ -128,6 +133,15 @@ def wilson_interval(correct: int, total: int, z: float = 1.96) -> tuple[float, f
     return max(0.0, center - margin), min(1.0, center + margin)
 
 
+def split_held_out(records: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Split records into the tuning set and the held-out set."""
+    tuning, held_out = [], []
+    for record in records:
+        opened = datetime.fromisoformat(record["created_at"])
+        (held_out if opened >= HELD_OUT_FROM else tuning).append(record)
+    return tuning, held_out
+
+
 def load_records(path: Path) -> list[dict]:
     lines = path.read_text("utf-8").splitlines()
     return [json.loads(line) for line in lines if line.strip()]
@@ -159,32 +173,40 @@ def print_summary(name: str, summary: dict) -> None:
         )
 
 
+def combine(summaries: list[dict]) -> dict:
+    expected: Counter[str] = Counter()
+    excluded: Counter[str] = Counter()
+    for summary in summaries:
+        expected.update(summary["expected_counts"])
+        excluded.update(summary["excluded"])
+    return {
+        "scored": sum(s["scored"] for s in summaries),
+        "correct": sum(s["correct"] for s in summaries),
+        "expected_counts": dict(expected),
+        "excluded": dict(excluded),
+        "misses": [],
+    }
+
+
 def main() -> None:
-    combined: Counter[str] = Counter()
-    combined_expected: Counter[str] = Counter()
-    combined_excluded: Counter[str] = Counter()
+    held_out_date = HELD_OUT_FROM.date().isoformat()
+    sets: dict[str, list[dict]] = {"tuning set": [], "held-out set": []}
     for repo, rules in RULES.items():
         path = output_path(DEFAULT_OUTPUT_DIR, repo)
         if not path.exists():
             print(f"{repo}: no predictions yet")
             continue
         records = load_records(path)
-        summary = score_records(records, current_labels(records, repo), rules)
-        print_summary(repo, summary)
-        combined["scored"] += summary["scored"]
-        combined["correct"] += summary["correct"]
-        combined_expected.update(summary["expected_counts"])
-        combined_excluded.update(summary["excluded"])
-    print_summary(
-        "All scored repos",
-        {
-            "scored": combined["scored"],
-            "correct": combined["correct"],
-            "expected_counts": dict(combined_expected),
-            "excluded": dict(combined_excluded),
-            "misses": [],
-        },
-    )
+        labels = current_labels(records, repo)
+        for (name, summaries), subset in zip(
+            sets.items(), split_held_out(records), strict=True
+        ):
+            summary = score_records(subset, labels, rules)
+            print_summary(f"{repo}, {name}", summary)
+            summaries.append(summary)
+    print(f"\nHeld-out set: issues opened {held_out_date} or later.")
+    for name, summaries in sets.items():
+        print_summary(f"All repos, {name}", combine(summaries))
 
 
 if __name__ == "__main__":

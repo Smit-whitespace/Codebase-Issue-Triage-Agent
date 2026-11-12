@@ -31,6 +31,9 @@ from evals.run_evals import preflight
 # These repos mark when a maintainer has reviewed an issue, so they can be scored.
 DEFAULT_REPOS = ("pypa/pip", "python-poetry/poetry")
 DEFAULT_OUTPUT_DIR = Path(__file__).parent / "results" / "shadow"
+# Issues opened from this date on are held out for final measurement. Never
+# tune prompts against them.
+HELD_OUT_FROM = datetime(2026, 11, 5, tzinfo=UTC)
 PAGE_SIZE = 100
 
 

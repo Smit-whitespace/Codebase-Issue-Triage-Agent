@@ -170,6 +170,8 @@ python -m evals.shadow_compare
 
 Issue templates apply type labels when an issue is opened, so a type label alone is only the reporter's claim. An issue is scored only after a maintainer has removed the "needs triage" label, which `pypa/pip` and `python-poetry/poetry` both use. Only category can be compared, not priority or investigation.
 
+Results are reported in two parts. Issues opened before 2026-11-05 are the tuning set: they were looked at while the prompt was being changed. Issues opened from 2026-11-05 on are the held-out set, which gives the honest accuracy figure. Don't change the prompt because of held-out misses.
+
 To compare an earlier prompt with the current one on those reviewed issues:
 
 ```powershell

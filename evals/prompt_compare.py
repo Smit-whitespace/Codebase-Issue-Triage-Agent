@@ -29,7 +29,12 @@ from app.llm import LLMConfigError, load_config
 from app.models import IssueReport, TriageResult
 from app.triage import TRIAGE_PROMPT, triage_issue
 from evals.run_evals import preflight
-from evals.shadow import DEFAULT_OUTPUT_DIR, output_path, prompt_version
+from evals.shadow import (
+    DEFAULT_OUTPUT_DIR,
+    HELD_OUT_FROM,
+    output_path,
+    prompt_version,
+)
 from evals.shadow_compare import (
     RULES,
     RepoRules,
@@ -39,7 +44,6 @@ from evals.shadow_compare import (
     wilson_interval,
 )
 
-HELD_OUT_FROM = datetime(2026, 11, 5, tzinfo=UTC)
 DEFAULT_RESULTS_DIR = Path(__file__).parent / "results" / "prompt_compare"
 
 IssueKey = tuple[str, int]
