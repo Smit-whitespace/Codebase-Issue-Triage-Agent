@@ -77,3 +77,30 @@ def test_prompt_states_when_the_description_is_missing() -> None:
 
     prompt = get_llm.return_value.invoke.call_args.args[0]
     assert "(no description provided)" in prompt
+
+
+def test_triage_can_use_a_different_prompt() -> None:
+    reply = json.dumps(
+        {
+            "category": "bug",
+            "priority": "low",
+            "summary": "A crash",
+            "rationale": "It crashes.",
+            "needs_repository_investigation": False,
+            "confidence": 0.5,
+            "proposed_labels": [],
+            "draft_response": "Thanks.",
+        }
+    )
+    other_prompt = "Other prompt. {schema} / {title} / {description}"
+
+    with patch("app.triage.get_llm") as get_llm:
+        get_llm.return_value.invoke.return_value = SimpleNamespace(content=reply)
+        triage_issue(
+            IssueReport(title="Crash", description="It crashes."),
+            prompt=other_prompt,
+        )
+
+    sent = get_llm.return_value.invoke.call_args.args[0]
+    assert sent.startswith("Other prompt.")
+    assert sent.endswith("/ Crash / It crashes.")

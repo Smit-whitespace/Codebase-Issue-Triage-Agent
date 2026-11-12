@@ -84,15 +84,15 @@ def parse_triage_response(content: str) -> TriageResult:
         ) from exc
 
 
-def triage_issue(report: IssueReport) -> TriageResult:
+def triage_issue(report: IssueReport, prompt: str = TRIAGE_PROMPT) -> TriageResult:
     """Generate and validate a structured issue-triage recommendation."""
-    prompt = TRIAGE_PROMPT.format(
+    message = prompt.format(
         schema=json.dumps(TriageResult.model_json_schema()),
         title=report.title,
         description=report.description or "(no description provided)",
     )
 
-    response = get_llm().invoke(prompt)
+    response = get_llm().invoke(message)
     return parse_triage_response(message_text(response.content))
 
 
